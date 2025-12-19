@@ -5,7 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 require('./dbconfig/dbconnection')
-var indexRouter = require('./routes/index');
+var indexRouter = require('./routes/product');
 var cors = require('cors');
 
 const fileUpload = require("express-fileupload");
@@ -31,7 +31,7 @@ app.use(
 app.use(express.static(path.join(__dirname, 'public/images')));
 app.use(cors());
 
-app.use('/', indexRouter);
+app.use('/adminaccount', indexRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
