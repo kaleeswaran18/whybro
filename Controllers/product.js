@@ -577,10 +577,10 @@ const GetthreeTransactionById = async (req, res) => {
     let cashOutTotal = 0;
 
     result.forEach(item => {
-      if (item._id === 'Cashin') {
+      if (item._id === 'Cash-in') {
         cashInTotal = item.totalAmount;
       }
-      if (item._id === 'Cashout') {
+      if (item._id === 'Cash-out') {
         cashOutTotal = item.totalAmount;
       }
     });
