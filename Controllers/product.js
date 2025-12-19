@@ -443,24 +443,60 @@ const DeleteSubBusiness = async (req, res) => {
 // ============================================
 const TransactionCreate = async (req, res) => {
   try {
-    const trx = await Transcation.create({
-      SubBusniessid: req.body.SubBusniessid,
-      Busniessid: req.body.Busniessid,
-      type: req.body.type,
-      amount: req.body.amount,
-      time: req.body.time,
-      date: req.body.date
+    const { SubBusniessid, Busniessid, type, amount } = req.body;
+
+    // 1️⃣ Find sub business
+    const subBusiness = await SubBusniess.findById(SubBusniessid);
+
+    if (!subBusiness) {
+      return res.status(404).json({
+        status: false,
+        message: "Sub business not found"
+      });
+    }
+
+    // 2️⃣ Cashout validation
+    if (type === 'Cash-out') {
+      if (subBusiness.amount < amount) {
+        return res.status(400).json({
+          status: false,
+          message: `You have only ${subBusiness.amount}`
+        });
+      }
+
+      subBusiness.amount -= amount;
+    } 
+    // 3️⃣ Cashin
+    else {
+      console.log( subBusiness.amount,amount,"checkalll")
+      subBusiness.amount += amount;
+    }
+
+    // 4️⃣ Save updated balance
+    await subBusiness.save();
+
+    // 5️⃣ Create transaction
+    const transaction = await Transcation.create({
+      SubBusniessid,
+      Busniessid,
+      type,
+      amount,
+      date: moment().format('YYYY-MM-DD'),
+      time: moment().format('hh:mm A'),
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       message: "Transaction Created Successfully",
-      data: trx
+      data: transaction
     });
 
   } catch (err) {
     console.error("Something went wrong:", err);
-    res.status(500).json({ status: false, message: "Internal Server Error" });
+    return res.status(500).json({
+      status: false,
+      message: "Internal Server Error"
+    });
   }
 };
 
@@ -489,9 +525,9 @@ const GetAllTransaction = async (req, res) => {
 // ============================================
 const GetTransactionById = async (req, res) => {
   try {
-    const trx = await Transcation.findById(req.params.id)
-      .populate("Busniessid")
-      .populate("SubBusniessid");
+    
+    const trx = await Transcation.find({SubBusniessid:req.params.id})
+    
 
     if (!trx) {
       return res.status(404).json({
@@ -510,6 +546,63 @@ const GetTransactionById = async (req, res) => {
     res.status(500).json({ status: false, message: "Internal Server Error" });
   }
 };
+const GetthreeTransactionById = async (req, res) => {
+  try {
+    // 1️⃣ Get SubBusiness
+    const subBusiness = await SubBusniess.findById(req.params.id);
+
+    if (!subBusiness) {
+      return res.status(404).json({
+        status: false,
+        message: "SubBusiness not found"
+      });
+    }
+
+    // 2️⃣ Aggregate Transactions
+    const result = await Transcation.aggregate([
+      {
+        $match: {
+          SubBusniessid: req.params.id
+        }
+      },
+      {
+        $group: {
+          _id: "$type",
+          totalAmount: { $sum: "$amount" }
+        }
+      }
+    ]);
+
+    let cashInTotal = 0;
+    let cashOutTotal = 0;
+
+    result.forEach(item => {
+      if (item._id === 'Cashin') {
+        cashInTotal = item.totalAmount;
+      }
+      if (item._id === 'Cashout') {
+        cashOutTotal = item.totalAmount;
+      }
+    });
+
+    // 3️⃣ Response
+    res.status(200).json({
+      status: true,
+      Amount: subBusiness.amount, // ✅ FIX
+      cashInTotal,
+      cashOutTotal
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      status: false,
+      message: "Internal Server Error"
+    });
+  }
+};
+
+
 
 // ============================================
 // TRANSACTION UPDATE
@@ -593,7 +686,8 @@ const DeleteTransaction = async (req, res) => {
   GetTransactionById,
   UpdateTransaction,
   DeleteTransaction,
-  GetAllsubbusBusiness
+  GetAllsubbusBusiness,
+  GetthreeTransactionById
   };
 
 };

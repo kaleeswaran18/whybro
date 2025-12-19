@@ -32,6 +32,7 @@ router.delete('/sub/delete/:id', adminaccountController.DeleteSubBusiness)
 router.post('/trx/create', adminaccountController.TransactionCreate)
 router.get('/trx/get', adminaccountController.GetAllTransaction)
 router.get('/trx/get/:id', adminaccountController.GetTransactionById)
+router.get('/threetrx/get/:id', adminaccountController.GetTransactionById)
 router.put('/trx/update/:id', adminaccountController.UpdateTransaction)
 router.delete('/trx/delete/:id', adminaccountController.DeleteTransaction)
 module.exports = router;
