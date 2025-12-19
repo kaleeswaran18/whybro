@@ -13,7 +13,7 @@ const adminaccountSchema = () => {
   const Login = async (req, res) => {
     try {
       const { password, phone } = req.body;
-
+      console.log(password, phone,'password, phone')
       let user = await Adminaccountmodel.findOne({ phoneNo: phone }).populate("branchid");
 
       if (!user) {
