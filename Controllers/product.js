@@ -443,9 +443,16 @@ const DeleteSubBusiness = async (req, res) => {
 // ============================================
 const TransactionCreate = async (req, res) => {
   try {
-    const { SubBusniessid, Busniessid, type, amount } = req.body;
+    const {
+      SubBusniessid,
+      Busniessid,
+      type,          // Cashin | Cashout
+      amount,
+      date,          // frontend selected date (ISO)
+      time           // frontend selected time (eg: 06:01 PM)
+    } = req.body;
 
-    // 1️⃣ Find sub business
+    // 1️⃣ Find Sub Business
     const subBusiness = await SubBusniess.findById(SubBusniessid);
 
     if (!subBusiness) {
@@ -456,7 +463,7 @@ const TransactionCreate = async (req, res) => {
     }
 
     // 2️⃣ Cashout validation
-    if (type === 'Cash-out') {
+    if (type === 'Cashout') {
       if (subBusiness.amount < amount) {
         return res.status(400).json({
           status: false,
@@ -465,24 +472,25 @@ const TransactionCreate = async (req, res) => {
       }
 
       subBusiness.amount -= amount;
-    } 
+    }
+
     // 3️⃣ Cashin
-    else {
-      console.log( subBusiness.amount,amount,"checkalll")
+    if (type === 'Cashin') {
       subBusiness.amount += amount;
     }
 
     // 4️⃣ Save updated balance
     await subBusiness.save();
 
-    // 5️⃣ Create transaction
+    // 5️⃣ Create Transaction
     const transaction = await Transcation.create({
       SubBusniessid,
       Busniessid,
       type,
       amount,
-      date: moment().format('YYYY-MM-DD'),
-      time: moment().format('hh:mm A'),
+      date: moment(date).format('YYYY-MM-DD'), // frontend date → clean format
+      time: time ,
+      cureentbalanceamount:subBusiness.amount                             // frontend time 그대로
     });
 
     return res.status(200).json({
@@ -499,6 +507,7 @@ const TransactionCreate = async (req, res) => {
     });
   }
 };
+
 
 // ============================================
 // TRANSACTION GET ALL
@@ -550,7 +559,7 @@ const GetthreeTransactionById = async (req, res) => {
   try {
     // 1️⃣ Get SubBusiness
     const subBusiness = await SubBusniess.findById(req.params.id);
-
+console.log(subBusiness,'subBusiness',req.params.id)
     if (!subBusiness) {
       return res.status(404).json({
         status: false,
@@ -562,7 +571,7 @@ const GetthreeTransactionById = async (req, res) => {
     const result = await Transcation.aggregate([
       {
         $match: {
-          SubBusniessid: req.params.id
+          SubBusniessid: subBusiness._id
         }
       },
       {
@@ -572,15 +581,15 @@ const GetthreeTransactionById = async (req, res) => {
         }
       }
     ]);
-
+console.log(result,"resultresultresult")
     let cashInTotal = 0;
     let cashOutTotal = 0;
 
     result.forEach(item => {
-      if (item._id === 'Cash-in') {
+      if (item._id === 'Cashin') {
         cashInTotal = item.totalAmount;
       }
-      if (item._id === 'Cash-out') {
+      if (item._id === 'Cashout') {
         cashOutTotal = item.totalAmount;
       }
     });

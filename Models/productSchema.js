@@ -45,7 +45,8 @@ const transcationsubbusniessmodel = new mongoose.Schema({
     type: { type: String },
     amount: { type: Number },
     time: { type: String },
-    date: { type: String }
+    date: { type: String },
+    cureentbalanceamount: { type: Number },
 })
 const Transcation = mongoose.model("Transcation", transcationsubbusniessmodel, "Transcation")
 
